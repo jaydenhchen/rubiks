@@ -116,23 +116,24 @@ export class CubeScene {
   }
 
   build() {
-    this.cubies.forEach((c) => c.removeFromParent());
-    this.cubies = [];
+    this.#disposeCubies();
     const gap = this.gap;
     const size = 0.94;
-    const plastic = new THREE.MeshStandardMaterial({
-      color: COLORS.plastic,
-      roughness: 0.42,
-      metalness: 0.18,
-    });
-    const geo = new RoundedBoxGeometry(size, size, size, 4, 0.08);
+    if (!this._plastic) {
+      this._plastic = new THREE.MeshStandardMaterial({
+        color: COLORS.plastic,
+        roughness: 0.42,
+        metalness: 0.18,
+      });
+      this._bodyGeo = new RoundedBoxGeometry(size, size, size, 4, 0.08);
+    }
 
     for (let x = -1; x <= 1; x++) {
       for (let y = -1; y <= 1; y++) {
         for (let z = -1; z <= 1; z++) {
           if (x === 0 && y === 0 && z === 0) continue;
           const group = new THREE.Group();
-          const body = new THREE.Mesh(geo, plastic);
+          const body = new THREE.Mesh(this._bodyGeo, this._plastic);
           body.castShadow = true;
           body.receiveShadow = true;
           group.add(body);
@@ -152,6 +153,17 @@ export class CubeScene {
         }
       }
     }
+  }
+
+  #disposeCubies() {
+    this.cubies.forEach((group) => {
+      group.traverse((obj) => {
+        if (obj.geometry && obj.geometry !== this._bodyGeo) obj.geometry.dispose();
+        if (obj.material && obj.material !== this._plastic) obj.material.dispose();
+      });
+      group.removeFromParent();
+    });
+    this.cubies = [];
   }
 
   #sticker(face) {

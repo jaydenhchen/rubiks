@@ -1,6 +1,6 @@
 import { Cube, randomScramble } from './cube.js';
 import { initSolver, solveCube } from './solver.js';
-import { CubeScene } from './scene.js?v=16';
+import { CubeScene } from './scene.js?v=17';
 
 const $ = (id) => document.getElementById(id);
 
@@ -128,6 +128,8 @@ function solve() {
 }
 
 function reset() {
+  twoShot = false;
+  clearTimeout(twoTimer);
   scene.clearQueue();
   scene.reset();
   cube.identity();
@@ -165,7 +167,9 @@ $('speed').addEventListener('input', (e) => {
 
 window.addEventListener('keydown', (ev) => {
   if (ev.repeat) return;
-  if (ev.target && ['INPUT', 'TEXTAREA'].includes(ev.target.tagName)) return;
+  if (ev.metaKey || ev.ctrlKey) return;
+  const tag = ev.target && ev.target.tagName;
+  if (tag && ['INPUT', 'TEXTAREA', 'BUTTON', 'SELECT'].includes(tag)) return;
   const key = ev.key;
   if (key === ' ') {
     ev.preventDefault();
@@ -201,5 +205,7 @@ window.addEventListener('keydown', (ev) => {
 scene.setSpeed(Number($('speed').value));
 renderTape([]);
 setStatus('Loading solver…');
-initSolver();
-setStatus('Ready');
+requestAnimationFrame(() => {
+  initSolver();
+  setStatus('Ready');
+});
